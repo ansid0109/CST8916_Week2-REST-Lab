@@ -21,6 +21,12 @@ users = [
     {"id": 2, "name": "Bob", "age": 30},
 ]
 
+# In-memory "database" of tasks
+tasks = [
+    {"id": 1, "title": "Learn REST", "description": "Study REST principles", "user_id": 1, "completed": True},
+    {"id": 2, "title": "Build API", "description": "Complete the assignment", "user_id": 2, "completed": False},
+]
+
 # Define route to handle requests to the root URL ('/')
 @app.route('/')
 def index():
@@ -41,6 +47,79 @@ def health_check():
 def get_users():
     return jsonify(users), 200  # 200 is the HTTP status code for 'OK'
 
+
+# Route to retrieve all tasks (GET request)
+# When the client sends a GET request to /tasks, this function will return a JSON list of all tasks.
+@app.route('/tasks', methods=['GET'])
+def get_tasks():
+    return jsonify(tasks), 200
+
+
+# Route to retrieve a single task by its ID (GET request)
+@app.route('/tasks/<int:task_id>', methods=['GET'])
+def get_task(task_id):
+    task = next((t for t in tasks if t['id'] == task_id), None)
+    if task is None:
+        abort(404)
+    return jsonify(task), 200
+
+
+# Route to create a new task (POST request)
+@app.route('/tasks', methods=['POST'])
+def create_task():
+    # Required fields: title, user_id. description is optional (default "").
+    if not request.json or 'title' not in request.json or 'user_id' not in request.json:
+        abort(400)
+
+    # Validate that user_id references an existing user
+    user = next((u for u in users if u['id'] == request.json['user_id']), None)
+    if user is None:
+        abort(400)
+
+    new_task = {
+        'id': tasks[-1]['id'] + 1 if tasks else 1,
+        'title': request.json['title'],
+        'description': request.json.get('description', ''),
+        'user_id': request.json['user_id'],
+        'completed': bool(request.json.get('completed', False))
+    }
+    tasks.append(new_task)
+    return jsonify(new_task), 201
+
+
+# Route to update an existing task (PUT request)
+@app.route('/tasks/<int:task_id>', methods=['PUT'])
+def update_task(task_id):
+    task = next((t for t in tasks if t['id'] == task_id), None)
+    if task is None:
+        abort(404)
+
+    if not request.json:
+        abort(400)
+
+    task['title'] = request.json.get('title', task['title'])
+    task['description'] = request.json.get('description', task.get('description', ''))
+    # If user_id provided, validate it references an existing user
+    if 'user_id' in request.json:
+        user = next((u for u in users if u['id'] == request.json['user_id']), None)
+        if user is None:
+            abort(400)
+        task['user_id'] = request.json['user_id']
+    task['completed'] = request.json.get('completed', task.get('completed', False))
+
+    return jsonify(task), 200
+
+
+# Route to delete a task (DELETE request)
+@app.route('/tasks/<int:task_id>', methods=['DELETE'])
+def delete_task(task_id):
+    global tasks
+    existing = next((t for t in tasks if t['id'] == task_id), None)
+    if existing is None:
+        abort(404)
+    tasks = [t for t in tasks if t['id'] != task_id]
+    return '', 204
+
 # Route to retrieve a single user by their ID (GET request)
 # When the client sends a GET request to /users/<id>, this function will return the user with the specified ID.
 @app.route('/users/<int:user_id>', methods=['GET'])
@@ -50,6 +129,16 @@ def get_user(user_id):
     if user is None:
         abort(404)  # If the user is not found, return a 404 error (Not Found)
     return jsonify(user), 200  # Return the user as a JSON object with a 200 status code (OK)
+
+
+# Route to retrieve all tasks for a specific user (GET request)
+@app.route('/users/<int:user_id>/tasks', methods=['GET'])
+def get_tasks_for_user(user_id):
+    user = next((u for u in users if u['id'] == user_id), None)
+    if user is None:
+        abort(404)
+    user_tasks = [t for t in tasks if t.get('user_id') == user_id]
+    return jsonify(user_tasks), 200
 
 # Route to create a new user (POST request)
 # When the client sends a POST request to /users with user data, this function will add the new user to the list.
