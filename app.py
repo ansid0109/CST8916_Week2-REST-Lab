@@ -60,7 +60,7 @@ def get_tasks():
 def get_task(task_id):
     task = next((t for t in tasks if t['id'] == task_id), None)
     if task is None:
-        abort(404)
+        return {"error": "Task not found"}, 404
     return jsonify(task), 200
 
 
@@ -69,12 +69,12 @@ def get_task(task_id):
 def create_task():
     # Required fields: title, user_id. description is optional (default "").
     if not request.json or 'title' not in request.json or 'user_id' not in request.json:
-        abort(400)
+        return {"error": "Missing required fields"}, 400
 
     # Validate that user_id references an existing user
     user = next((u for u in users if u['id'] == request.json['user_id']), None)
     if user is None:
-        abort(400)
+        return {"error": "Invalid user_id"}, 400
 
     new_task = {
         'id': tasks[-1]['id'] + 1 if tasks else 1,
@@ -92,10 +92,10 @@ def create_task():
 def update_task(task_id):
     task = next((t for t in tasks if t['id'] == task_id), None)
     if task is None:
-        abort(404)
+        return {"error": "Task not found"}, 404
 
     if not request.json:
-        abort(400)
+        return {"error": "Missing JSON body"}, 400
 
     task['title'] = request.json.get('title', task['title'])
     task['description'] = request.json.get('description', task.get('description', ''))
@@ -103,7 +103,7 @@ def update_task(task_id):
     if 'user_id' in request.json:
         user = next((u for u in users if u['id'] == request.json['user_id']), None)
         if user is None:
-            abort(400)
+            return {"error": "Invalid user_id"}, 400
         task['user_id'] = request.json['user_id']
     task['completed'] = request.json.get('completed', task.get('completed', False))
 
@@ -116,7 +116,7 @@ def delete_task(task_id):
     global tasks
     existing = next((t for t in tasks if t['id'] == task_id), None)
     if existing is None:
-        abort(404)
+        return {"error": "Task not found"}, 404
     tasks = [t for t in tasks if t['id'] != task_id]
     return '', 204
 
@@ -127,7 +127,7 @@ def get_user(user_id):
     # Using a list comprehension to find the user by ID
     user = next((user for user in users if user['id'] == user_id), None)
     if user is None:
-        abort(404)  # If the user is not found, return a 404 error (Not Found)
+        return {"error": "User not found"}, 404  # If the user is not found, return a 404 error (Not Found)
     return jsonify(user), 200  # Return the user as a JSON object with a 200 status code (OK)
 
 
@@ -136,7 +136,7 @@ def get_user(user_id):
 def get_tasks_for_user(user_id):
     user = next((u for u in users if u['id'] == user_id), None)
     if user is None:
-        abort(404)
+        return {"error": "User not found"}, 404
     user_tasks = [t for t in tasks if t.get('user_id') == user_id]
     return jsonify(user_tasks), 200
 
@@ -146,7 +146,7 @@ def get_tasks_for_user(user_id):
 def create_user():
     # If the request body is not in JSON format or if the 'name' field is missing, return a 400 error (Bad Request)
     if not request.json or not 'name' in request.json:
-        abort(400)
+        return {"error": "Missing required fields"}, 400
     
     # Create a new user dictionary. Assign the next available ID by incrementing the highest current ID.
     # If no users exist, the new ID will be 1.
@@ -166,11 +166,11 @@ def update_user(user_id):
     # Find the user by their ID
     user = next((user for user in users if user['id'] == user_id), None)
     if user is None:
-        abort(404)  # If the user is not found, return a 404 error (Not Found)
+        return {"error": "User not found"}, 404  # If the user is not found, return a 404 error (Not Found)
     
     # If the request body is missing or not in JSON format, return a 400 error (Bad Request)
     if not request.json:
-        abort(400)
+        return {"error": "Missing JSON body"}, 400
     
     # Update the user's data based on the request body
     # If a field is not provided in the request, keep the existing value

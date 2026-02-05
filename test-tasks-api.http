@@ -1,0 +1,77 @@
+@host = http://localhost:8000
+
+### 1) GET all tasks
+GET {{host}}/tasks
+Accept: application/json
+
+# Expected: 200 with tasks array
+
+### 2) GET a single task
+GET {{host}}/tasks/1
+Accept: application/json
+
+# Expected: 200 with task object
+
+### 3) GET a task that doesn't exist
+GET {{host}}/tasks/999
+Accept: application/json
+
+# Expected: 404
+
+### 4) POST a new task (valid data)
+POST {{host}}/tasks
+Content-Type: application/json
+
+{
+	"title": "Write tests",
+	"description": "Add HTTP tests",
+	"user_id": 1,
+	"completed": false
+}
+
+# Expected: 201 with created task
+
+### 5) POST a task with missing title
+POST {{host}}/tasks
+Content-Type: application/json
+
+{
+	"user_id": 1,
+	"description": "Missing title"
+}
+
+# Expected: 400
+
+### 6) POST a task with invalid user_id
+POST {{host}}/tasks
+Content-Type: application/json
+
+{
+	"title": "Invalid user",
+	"user_id": 999
+}
+
+# Expected: 400
+
+### 7) PUT to update a task
+PUT {{host}}/tasks/2
+Content-Type: application/json
+
+{
+	"title": "Build API - updated",
+	"description": "Complete the assignment - updated",
+	"completed": true
+}
+
+# Expected: 200 with updated task
+
+### 8) DELETE a task
+DELETE {{host}}/tasks/2
+
+# Expected: 204
+
+### 9) GET tasks for a specific user
+GET {{host}}/users/1/tasks
+Accept: application/json
+
+# Expected: 200 with user's tasks
