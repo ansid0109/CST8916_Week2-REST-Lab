@@ -1,10 +1,9 @@
-# Import necessary modules from Flask
-# Flask: the core framework for the web app
-# jsonify: to convert Python dictionaries to JSON responses
-# request: to access incoming request data (e.g., POST data)
-# abort: to handle errors and send error status codes
+# AI Disclosure: Github Copilot was used in agent mode to assist with
+# implementing the tasks CRUD endpoints.
+# writing the http tests file
+
 from flask import Flask, jsonify, request, abort
-from flask_cors import CORS  # Enable Cross-Origin Resource Sharing for client apps
+from flask_cors import CORS 
 
 # Initialize the Flask app
 app = Flask(__name__)
